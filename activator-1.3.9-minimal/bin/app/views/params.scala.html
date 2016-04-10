@@ -1,0 +1,9 @@
+@import controllers._
+@(id : Int, userForm : play.api.data.Form[controllers.SensorParams])(implicit messages: Messages)
+
+@helper.form(action = routes.HomeController.modifyParams()) {
+@helper.inputText(userForm("id"), 'id -> "id", 'value -> "id")
+@helper.inputText(userForm("name"), 'id -> "name")
+@helper.inputText(userForm("cl"), 'id -> "cl")
+<button type="submit" name="action" value="edit">Save</button>
+}

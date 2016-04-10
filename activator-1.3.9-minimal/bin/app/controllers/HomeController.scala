@@ -10,6 +10,10 @@ import akka.stream._
 import akka.stream.scaladsl._
 import scala.concurrent.Future
 import math._
+import play.api.data._
+import play.api.data.Forms._
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -26,7 +30,7 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
    */
   def index = Action {
     //Ok(ids.mkString(" "))
-    Ok(views.html.main("MAIN", ids.toList))
+    Ok(views.html.main("MAIN", names.toList))
   }
 
   var ids = Set[Int]()
@@ -98,7 +102,7 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
 
   def chart(id : Int) = Action { implicit request =>
     if (ids contains id) {
-       Ok(views.html.chart(id))
+       Ok(views.html.chart(id, names.getOrElse(id, "")))
     } else {
       NoContent
     }
@@ -126,4 +130,42 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   def sensor = Action {
     Ok(views.html.sensor())
   }
+
+  val SensorParamsForm = Form(
+      mapping(
+          "id" -> number,
+          "name" -> text,
+          "cl" -> number
+      )(SensorParams.apply)(SensorParams.unapply))
+
+
+  def modifyParams = Action { implicit request =>
+      SensorParamsForm.bindFromRequest.fold(
+          formWithErrors => {
+              BadRequest("Check data")
+          },
+          sensor => {
+              names += (sensor.id -> sensor.name)
+              classes += (sensor.id -> sensor.cl)
+              Redirect(routes.HomeController.index)
+          }
+      )
+  }
+
+  def params = Action { implicit request =>
+    var result = Ok("Nothing to change")
+    var SensorParamsFormFill : Form[SensorParams] = null
+    for(id <- ids){
+        names.get(id) match {
+            case Some(name) => ()
+            case None => 
+              SensorParamsFormFill = SensorParamsForm.fill(SensorParams(id,"",0))
+              result = Ok(views.html.params(id, SensorParamsFormFill))
+        }
+    }
+    result
+  }
+
 }
+
+case class SensorParams(id : Int, name : String, cl : Int)

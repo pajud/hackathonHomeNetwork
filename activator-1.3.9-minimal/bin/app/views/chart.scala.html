@@ -1,10 +1,13 @@
-@(host: Int)( implicit request: RequestHeader )
+@(host: Int, name : String)(implicit request: RequestHeader )
 
 <div id="content">
   <div id="chart">
   <script type="text/javascript">
     var charts = []   
     charts[ '@host' ] = new Highcharts.Chart({                 
+      title: {
+          text: '@name'
+      },
       chart: {
         renderTo: 'chart',
         defaultSeriesType: 'spline'            
