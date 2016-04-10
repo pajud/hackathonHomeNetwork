@@ -73,7 +73,7 @@
 				max: 100
 			},
 			xaxis: {
-				show: false
+				show: true
 			}
 		});
 
@@ -81,7 +81,7 @@
 
 			plot.setData([getRandomData()]);
 
-			// Since the axes don't change, we don't need to call plot.setupGrid()
+			plot.setupGrid();
 
 			plot.draw();
 			setTimeout(update, updateInterval);
