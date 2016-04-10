@@ -22,6 +22,8 @@ import play.api.i18n.Messages.Implicits._
 @Singleton
 class HomeController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
 
+  CheckSensorJob.onStart(system)
+
   /**
    * Create an Action to render an HTML page with a welcome message.
    * The configuration in the `routes` file means that this method
@@ -30,39 +32,32 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
    */
   def index = Action {
     //Ok(ids.mkString(" "))
-    Ok(views.html.main("MAIN", names.toList))
+    Ok(views.html.main("MAIN", HomeController.names.toList))
   }
-
-  var ids = Set[Int]()
 
   val random = scala.util.Random
 
-  case class Measure(date : java.util.Date, measure : Float)
-
-  var measures = Map[Int, List[Measure]]()
-  var classes = Map[Int, Int]()
-  var names = Map[Int, String]()
   var flows = Map[Int, Flow[String, String, _]]()
 
   def register = Action {
     var id = random.nextInt
-    while (ids contains id){
+    while (HomeController.ids contains id){
       id = random.nextInt
     }
-    ids += id
+    HomeController.ids += id
     Ok(id + "").withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
 
   }
 
   def measureData(id : Int, data : Float) = Action {
-    if (ids contains id) {
+    if (HomeController.ids contains id) {
       val currentTime = java.util.Calendar.getInstance.getTime
-      measures += (id -> (Measure(currentTime, data) :: measures.getOrElse(id, List[Measure]())))
+      HomeController.measures += (id -> (Measure(currentTime, data) :: HomeController.measures.getOrElse(id, List[Measure]())))
       MyWebSocketActor.mapping.get(id) match {
         case Some(actor) => if (actor != null) {
             var proba = getProba(id, data)
-            if (measures.getOrElse(id, List()).length > 10 && proba < 0.001) {
+            if (HomeController.measures.getOrElse(id, List()).length > 10 && proba < 0.001) {
                 actor ! "There is a huge problem somewhere !"
             }
             actor ! (currentTime.getTime() + " " + data)
@@ -79,8 +74,8 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   }
 
   def setClass(id : Int, cl : Int) = Action {
-      if (ids contains id){
-          classes += (id -> cl)
+      if (HomeController.ids contains id){
+          HomeController.classes += (id -> cl)
           Ok("")
       } else {
           BadRequest("")
@@ -88,8 +83,8 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   }
 
   def setName(id : Int, name : String) = Action {
-      if (ids contains id){
-          names += (id -> name)
+      if (HomeController.ids contains id){
+          HomeController.names += (id -> name)
           Ok("")
       } else {
           BadRequest("")
@@ -101,22 +96,22 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   }
 
   def chart(id : Int) = Action { implicit request =>
-    if (ids contains id) {
-       Ok(views.html.chart(id, names.getOrElse(id, "")))
+    if (HomeController.ids contains id) {
+       Ok(views.html.chart(id, HomeController.names.getOrElse(id, "")))
     } else {
       NoContent
     }
   }
 
   def getMean(id : Int) = {
-     var m = measures.getOrElse(id, List[Measure]())
+     var m = HomeController.measures.getOrElse(id, List[Measure]())
      var m2 = m.map(x => x.measure)
      m2.sum / m2.length
   }
 
   def getVariance(id : Int) = {
     var mean = getMean(id)
-     var m = measures.getOrElse(id, List[Measure]())
+     var m = HomeController.measures.getOrElse(id, List[Measure]())
      var m2 = m.map(x => (x.measure - mean) * (x.measure - mean))
      m2.sum / m2.length
   }
@@ -145,8 +140,8 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
               BadRequest("Check data")
           },
           sensor => {
-              names += (sensor.id -> sensor.name)
-              classes += (sensor.id -> sensor.cl)
+              HomeController.names += (sensor.id -> sensor.name)
+              HomeController.classes += (sensor.id -> sensor.cl)
               Redirect(routes.HomeController.index)
           }
       )
@@ -155,8 +150,8 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   def params = Action { implicit request =>
     var result = Ok("Nothing to change")
     var SensorParamsFormFill : Form[SensorParams] = null
-    for(id <- ids){
-        names.get(id) match {
+    for(id <- HomeController.ids){
+        HomeController.names.get(id) match {
             case Some(name) => ()
             case None => 
               SensorParamsFormFill = SensorParamsForm.fill(SensorParams(id,"",0))
@@ -169,3 +164,12 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
 }
 
 case class SensorParams(id : Int, name : String, cl : Int)
+
+case class Measure(date : java.util.Date, measure : Float)
+
+object HomeController {
+  var measures = Map[Int, List[Measure]]()
+  var ids = Set[Int]()
+  var classes = Map[Int, Int]()
+  var names = Map[Int, String]()
+}
