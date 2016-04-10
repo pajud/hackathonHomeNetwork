@@ -9,6 +9,7 @@ import akka.actor._
 import akka.stream._
 import akka.stream.scaladsl._
 import scala.concurrent.Future
+import math._
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -55,7 +56,13 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
       val currentTime = java.util.Calendar.getInstance.getTime
       measures += (id -> (Measure(currentTime, data) :: measures.getOrElse(id, List[Measure]())))
       MyWebSocketActor.mapping.get(id) match {
-        case Some(actor) => if (actor != null) actor ! (currentTime.getTime() + " " + data)
+        case Some(actor) => if (actor != null) {
+            var proba = getProba(id, data)
+            if (measures.getOrElse(id, List()).length > 10 && proba < 0.001) {
+                actor ! "There is a huge problem somewhere !"
+            }
+            actor ! (currentTime.getTime() + " " + data)
+        }
         case None => ()
       }
       Ok("You are " + id + " and you measured " + data).withHeaders(
@@ -95,5 +102,28 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
     } else {
       NoContent
     }
+  }
+
+  def getMean(id : Int) = {
+     var m = measures.getOrElse(id, List[Measure]())
+     var m2 = m.map(x => x.measure)
+     m2.sum / m2.length
+  }
+
+  def getVariance(id : Int) = {
+    var mean = getMean(id)
+     var m = measures.getOrElse(id, List[Measure]())
+     var m2 = m.map(x => (x.measure - mean) * (x.measure - mean))
+     m2.sum / m2.length
+  }
+
+  def getProba(id : Int, data : Float) = {
+    var mean = getMean(id)
+    var sigma = getVariance(id)
+    1.0 / math.sqrt(sigma * 2.0 * math.Pi) * math.exp(-(data - mean)*(data - mean) / 2.0 / sigma)
+  }
+
+  def sensor = Action {
+    Ok(views.html.sensor())
   }
 }

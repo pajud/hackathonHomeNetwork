@@ -25,11 +25,15 @@ var socket = new WebSocket("@routes.HomeController.socket( host ).webSocketURL()
 socket.onmessage = function( event ) { 
   console.log(event.data)
   var datapoint = event.data.split(' ');
-  var chart = charts[ '@host' ]
-  
-  chart.series[ 0 ].addPoint({
-    x: datapoint[0],
-    y: parseFloat(datapoint[1])
-  }, true, chart.series[ 0 ].data.length >= 50 );
+  if (datapoint.length == 2) {
+      var chart = charts[ '@host' ]
+      
+      chart.series[ 0 ].addPoint({
+        x: datapoint[0],
+        y: parseFloat(datapoint[1])
+      }, true, chart.series[ 0 ].data.length >= 50 );
+  } else {
+      alert(event.data)
+  }
 }
 </script>
