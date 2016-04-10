@@ -89,13 +89,13 @@
 												<thead>
 													<tr>
 														<th class="fa-ellipsis-v"> No.</th>
-														<th class="fa-cube">Type of Sensor</th>
+														<th class="fa-cube">Name</th>
 														<th class ="fa-map-marker"> Location</th>
 														<th class ="fa-power-off"> Active</th>
 														<th class ="fa-lock"> Security level</th>
 													</tr>
 												</thead>
-												<tbody>
+												<tbody id="sensors">
 													@hosts.map { host =>
 													<tr class="info" >
 														<td>@host._1</td>
@@ -166,7 +166,7 @@
 									<!-- /.panel-body -->
 									<div class="panel panel-default">
 										<div class="panel-heading">
-											<i class="fa fa-bar-chart-o fa-fw"></i> Daily statistics
+											<i class="fa fa-bar-chart-o fa-fw"></i> Sensor readings:
 										</div>
 										<div class="panel-body">
 											<!--<div id="morris-bar-chart"></div>-->
@@ -189,6 +189,44 @@
 			}
 		)
 	}
+	</script>
+
+	<script type="text/javascript">
+$(document).ready(function() {
+	// periodically refresh the table
+	setInterval(function() {
+		var tab = $('#sensors');
+
+		$.getJSON("/sensors", function(data) {
+
+			var table_content = '';
+
+			for(var idx = 0; idx < data.length; idx++)
+			{
+				var sensor_info = data[idx];
+
+				table_content +=
+					'<tr>' +
+					'<td>' + sensor_info.id + '</td>' +
+					'<td><a href="#" onclick="javascript:show(' + "'" + sensor_info.id + "'" + ')"><b>' + sensor_info.name + '</b></a></td>' +
+					'<td>---</td>';
+
+				if(sensor_info.status == "Active") {
+					table_content += '<td class="fa-check"><font color="green">Enabled</font></td>';
+				} else if(sensor_info.status == "Disconnected") {
+					table_content += '<td class="fa-warning"><font color="red">Disconnected</font></td>';
+				} else {
+					table_content += '<td class="fa-warning"><font color="orange">Malfunction</font></td>';
+				}
+				table_content += '<td></td></tr>';
+			}
+
+
+			tab.html(table_content);
+			console.log(data);
+		});
+	}, 1000);
+});
 	</script>
 
 

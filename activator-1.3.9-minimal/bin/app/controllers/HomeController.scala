@@ -3,7 +3,6 @@ package controllers
 import javax.inject._
 import play.api._
 import play.api.mvc._
-import play.api.libs.json.JsValue
 import play.api.libs.streams._
 import akka.actor._
 import akka.stream._
@@ -14,6 +13,8 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
+import play.api.libs.json.{JsNull,Json,JsString,JsValue}
+
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -39,34 +40,36 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
 
   var flows = Map[Int, Flow[String, String, _]]()
 
-
   def register = Action {
     this.synchronized {
-    var id = random.nextInt
-    while (HomeController.ids contains id){
-      id = random.nextInt
+	  var id = random.nextInt
+	  while (HomeController.ids contains id){
+	    id = random.nextInt
+	  }
+	  HomeController.ids += id
+	  HomeController.status += (id -> SensorState.Active)
+	  Ok(id + "").withHeaders(
+	    ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
-    HomeController.ids += id
-    Ok(id + "").withHeaders(
-      ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    }
-
   }
 
   def measureData(id : Int, data : Float) = Action {
     if (HomeController.ids contains id) {
       val currentTime = java.util.Calendar.getInstance.getTime
       HomeController.measures += (id -> (Measure(currentTime, data) :: HomeController.measures.getOrElse(id, List[Measure]())))
+      var proba = getProba(id, data)
+        if (HomeController.measures.getOrElse(id, List()).length > 10 && proba < 0.001) {
+            //actor ! "There is a huge problem somewhere !"
+            HomeController.status += (id -> SensorState.Malfunction)
+      }
+
       MyWebSocketActor.mapping.get(id) match {
         case Some(actor) => if (actor != null) {
-            var proba = getProba(id, data)
-            if (HomeController.measures.getOrElse(id, List()).length > 10 && proba < 0.001) {
-                actor ! "There is a huge problem somewhere !"
-            }
             actor ! (currentTime.getTime() + " " + data)
         }
         case None => ()
       }
+
       Ok("You are " + id + " and you measured " + data).withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
 
@@ -166,15 +169,34 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
     result
   }
 
+  def listSensors = Action { implicit request =>
+//	val sensor_info_list = HomeController.ids.map(id =>
+//  		SensorInfo(id,
+//  			HomeController.names.getOrElse(id, id.toString),
+//  			HomeController.status.getOrElse(id, SensorState.Disconnected))
+//  	)
+
+	Ok(Json.toJson(HomeController.ids.toList.map((id : Int) => Json.obj(
+  		"id" -> id,
+  		"name" -> HomeController.names.getOrElse(id, id.toString).toString,
+  		"status" -> HomeController.status.getOrElse(id, SensorState.Disconnected).toString
+  	))))
+  }
+}
+
+object SensorState extends Enumeration {
+  val Active, Disconnected, Malfunction = Value
 }
 
 case class SensorParams(id : Int, name : String, cl : Int)
 
 case class Measure(date : java.util.Date, measure : Float)
+case class SensorInfo(id : Int, name : String, status : SensorState.Value)
 
 object HomeController {
   var measures = Map[Int, List[Measure]]()
   var ids = Set[Int]()
   var classes = Map[Int, Int]()
   var names = Map[Int, String]()
+  var status = Map[Int, SensorState.Value]()
 }
