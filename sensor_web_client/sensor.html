@@ -7,17 +7,17 @@
     <style>
 		body{
 			font-family:Arial;
-			background: rgba(179,179,179,1);
-			background: -moz-linear-gradient(-45deg, rgba(179,179,179,1) 0%, rgba(171,171,171,1) 47%, rgba(166,166,166,1) 100%);
-			background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(179,179,179,1)), color-stop(47%, rgba(171,171,171,1)), color-stop(100%, rgba(166,166,166,1)));
-			background: -webkit-linear-gradient(-45deg, rgba(179,179,179,1) 0%, rgba(171,171,171,1) 47%, rgba(166,166,166,1) 100%);
-			background: -o-linear-gradient(-45deg, rgba(179,179,179,1) 0%, rgba(171,171,171,1) 47%, rgba(166,166,166,1) 100%);
-			background: -ms-linear-gradient(-45deg, rgba(179,179,179,1) 0%, rgba(171,171,171,1) 47%, rgba(166,166,166,1) 100%);
-			background: linear-gradient(135deg, rgba(179,179,179,1) 0%, rgba(171,171,171,1) 47%, rgba(166,166,166,1) 100%);
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3b3b3', endColorstr='#a6a6a6', GradientType=1 );	
+background: rgba(232,232,232,1);
+background: -moz-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(232,232,232,1)), color-stop(50%, rgba(212,212,212,1)), color-stop(100%, rgba(138,138,138,1)));
+background: -webkit-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+background: -o-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+background: -ms-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+background: linear-gradient(135deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', endColorstr='#8a8a8a', GradientType=1 );
 		}
 	
-		#sensorList{
+		#sensorList {
 			width: 220px;
    			height: 50px;
 		    overflow: hidden;
@@ -26,7 +26,7 @@
 		   padding: 1px 1px 1px 15px;
 		   font-size: 28px;
 		   line-height: 1;
-		   -webkit-appearance: none;
+		   -webkit-appearance: none; 
 		}
 		
 		#startButton {
@@ -68,16 +68,17 @@
 			filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#5cb811', endColorstr='#77d42a',GradientType=0);
 			background-color:#5cb811;
 		}
-		#startButton:active {
-			
-		}
+		 #freq_rate {
+			 padding: 1px 1px 1px 15px;
+		   	width: 75px;
+		 }
 	</style>
     
 </head>
 
 <body style="width:100%; height:100%">
 
-<div style="position:absolute; width:320px; height: 200px; top:50%; left:50%; transform:translateX(-50%) translateY(-50%);">
+<div style="position:absolute; width:320px; height: 200px; top:30%; left:50%; transform:translateX(-50%) translateY(-50%); margin: 20px 20px 20px 20px;">
 
 	<h1 id="header">Select a new sensor</h1><br/>
     
@@ -86,11 +87,17 @@
           <option value="1" selected="selected">Accelerometer</option>
           <option value="2">Temperature</option>
           <option value="3">GPS</option>
+          <option value="4">Pressure</option>
+          <option value="5">Binary</option>
         </select>
         
         <button id="startButton" onClick="onSensorStart()">Start</button>
+        <br/><br/>
+        <label for="freq_rate">Time between messages (ms): </label><input id="freq_rate" type="number" min="1000" max="1000000" step="1000" value ="3000" style="position:absolute; right:0px;"/>
         
-     </div>
+     </div><br/>
+     
+     
     
     <h3 id="status"></h3>
     <h4 id="log"></h4>
@@ -103,8 +110,8 @@
 		var myId = null;
 		var step = 0;
 		var intervalFunc = null;
-		var mean = {"Accelerometer": 100, "Temperature": 200, "GPS": 300};
-		var deviation = {"Accelerometer": 20, "Temperature": 40, "GPS": 30};
+		var mean = {"Accelerometer": 100, "Temperature": 200, "GPS": 300, "Pressure": 50, "Binary": 0};
+		var deviation = {"Accelerometer": 20, "Temperature": 40, "GPS": 30, "Pressure": 30, "Binary": 1};
 		var sensorType = null;
 		
 	    function onListFocus(){
@@ -126,7 +133,7 @@
 					var v = e.options[e.selectedIndex].text;
 					sensorType = v;
 					document.getElementById("status").innerHTML = v + " started with id: " + myId;
-					intervalFunc = setInterval(sendValue, 3000);
+					intervalFunc = setInterval(sendValue, document.getElementById("freq_rate").value);
 				}
 			});
 		}
@@ -147,8 +154,12 @@
 		{
 			step += 1;
 			var value = 100.01 + step;
-			if (sensorType !== null){
+			if (sensorType !== null && mean[sensorType] !== null &&  deviation[sensorType] !== null){
 				value = mean[sensorType] + Math.random() * deviation[sensorType];
+			}
+			
+			if (sensorType === "Binary"){
+				value = Math.round(value);
 			}
 			
 			if (step > 10000 * Math.random()){
