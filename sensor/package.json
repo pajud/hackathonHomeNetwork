@@ -1,0 +1,12 @@
+{
+	"name": "octanis-sensor-wrapper",
+	"dependencies": {
+		"cylon": "*",
+		"cylon-ble": "*",
+		"cylon-api-http": "*",
+		"request": "*"
+	},
+	"scripts": {
+		"start": "node index.js"
+	}
+}
