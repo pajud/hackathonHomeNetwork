@@ -33,3 +33,5 @@ GET     /sensor                     controllers.HomeController.sensor
 POST    /params                     controllers.HomeController.modifyParams
 
 GET     /params                     controllers.HomeController.params
+
+GET		/sensors					controllers.HomeController.listSensors

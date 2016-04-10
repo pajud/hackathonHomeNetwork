@@ -41,19 +41,34 @@ class ReminderActor extends Actor {
                     var m3 = m2.head :: m2
                     var m4 = m2.zip(m3)
                     var m5 = m4.map(x => x._2 - x._1)
-                    MyWebSocketActor.mapping.get(id) match {
-                      case Some(actor) =>
-                          if (actor != null) {
-                            val currentTime = java.util.Calendar.getInstance.getTime.getTime - m3.max
-                            var p = getProba(id, m5, currentTime)
-                            if (p < 0.0001 && abs(currentTime) > 2 * 2 * abs(m5.tail.min) && !(toExclude contains id)){
-                              Logger.info(currentTime + " " + m5.tail.min.toString)
-                              actor ! ("The device " + HomeController.names.getOrElse(id, "NoName") + " is probably dead !")
-                              toExclude += id
-                            }
-                          }
-                      case None => ()
+
+                    val currentTime = java.util.Calendar.getInstance.getTime.getTime - m3.max
+                    var p = getProba(id, m5, currentTime)
+                    if (p < 0.0001 && abs(currentTime) > 2 * 2 * abs(m5.tail.min) && !(toExclude contains id)){
+                      Logger.info(currentTime + " " + m5.tail.min.toString)
+                      //actor ! ("The device " + HomeController.names.getOrElse(id, "NoName") + " is probably dead !")
+
+                      HomeController.status += (id -> SensorState.Disconnected)
+
+                      toExclude += id
                     }
+
+                    // MyWebSocketActor.mapping.get(id) match {
+                    //   case Some(actor) =>
+                    //       if (actor != null) {
+                    //         val currentTime = java.util.Calendar.getInstance.getTime.getTime - m3.max
+                    //         var p = getProba(id, m5, currentTime)
+                    //         if (p < 0.0001 && abs(currentTime) > 2 * 2 * abs(m5.tail.min) && !(toExclude contains id)){
+                    //           Logger.info(currentTime + " " + m5.tail.min.toString)
+                    //           //actor ! ("The device " + HomeController.names.getOrElse(id, "NoName") + " is probably dead !")
+
+                    //           HomeController.status += (id -> SensorState.Disconnected)
+
+                    //           toExclude += id
+                    //         }
+                    //       }
+                    //   case None => ()
+                    // }
                 }
             }
     }
@@ -61,7 +76,7 @@ class ReminderActor extends Actor {
     def getMean(id : Int, data : List[Long]) = {
        data.sum / data.length
     }
-  
+
     def getVariance(id : Int, data : List[Long]) = {
       var mean = getMean(id, data)
        var m2 = data.map(x => (x - mean) * (x - mean))

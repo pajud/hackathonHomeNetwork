@@ -9,28 +9,28 @@
     <style>
 		body{
 			font-family:Arial;
-background: rgba(232,232,232,1);
-background: -moz-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
-background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(232,232,232,1)), color-stop(50%, rgba(212,212,212,1)), color-stop(100%, rgba(138,138,138,1)));
-background: -webkit-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
-background: -o-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
-background: -ms-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
-background: linear-gradient(135deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', endColorstr='#8a8a8a', GradientType=1 );
+			background: rgba(232,232,232,1);
+			background: -moz-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+			background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(232,232,232,1)), color-stop(50%, rgba(212,212,212,1)), color-stop(100%, rgba(138,138,138,1)));
+			background: -webkit-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+			background: -o-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+			background: -ms-linear-gradient(-45deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+			background: linear-gradient(135deg, rgba(232,232,232,1) 0%, rgba(212,212,212,1) 50%, rgba(138,138,138,1) 100%);
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', endColorstr='#8a8a8a', GradientType=1 );
 		}
-	
+
 		#sensorList {
 			width: 220px;
    			height: 50px;
 		    overflow: hidden;
 		    background: no-repeat right #FF8600;
-		    border: 3px solid #ccc;	
+		    border: 3px solid #ccc;
 		   padding: 1px 1px 1px 15px;
 		   font-size: 28px;
 		   line-height: 1;
-		   -webkit-appearance: none; 
+		   -webkit-appearance: none;
 		}
-		
+
 		#startButton {
 			position:absolute;
 			width:100px;
@@ -75,7 +75,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', end
 		   	width: 75px;
 		 }
 	</style>
-    
+
 </head>
 
 <body style="width:100%; height:100%">
@@ -83,7 +83,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', end
 <div style="position:absolute; width:320px; height: 200px; top:30%; left:50%; transform:translateX(-50%) translateY(-50%); margin: 20px 20px 20px 20px;">
 
 	<h1 id="header">Select a new sensor</h1><br/>
-    
+
     <div>
         <select id="sensorList" onFocus="onListFocus()">
           <option value="1" selected="selected">Accelerometer</option>
@@ -92,41 +92,41 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', end
           <option value="4">Pressure</option>
           <option value="5">Binary</option>
         </select>
-        
+
         <button id="startButton" onClick="onSensorStart()">Start</button>
         <br/><br/>
         <label for="freq_rate">Time between messages (ms): </label><input id="freq_rate" type="number" min="1000" max="1000000" step="1000" value ="3000" style="position:absolute; right:0px;"/>
-        
+
      </div><br/>
-     
-     
-    
+
+
+
     <h3 id="status"></h3>
     <h4 id="log"></h4>
-    
+
 </div>
-    
-    <script> 
-		var registerUrl = "http://10.42.0.3:9000/register";
-		var valueUrl = "http://10.42.0.3:9000/measuredata";
+
+    <script>
+		var registerUrl = "http://10.42.0.1:9000/register";
+		var valueUrl = "http://10.42.0.1:9000/measuredata";
 		var myId = null;
 		var step = 0;
 		var intervalFunc = null;
 		var mean = {"Accelerometer": 100, "Temperature": 200, "GPS": 300, "Pressure": 50, "Binary": 0};
 		var deviation = {"Accelerometer": 20, "Temperature": 40, "GPS": 30, "Pressure": 30, "Binary": 1};
 		var sensorType = null;
-		
+
 	    function onListFocus(){
 			if (intervalFunc !== null){
-				clearInterval(intervalFunc);	
+				clearInterval(intervalFunc);
 			}
 			document.getElementById("status").innerHTML = "";
 			document.getElementById("log").innerHTML = "";
 		}
-		
+
     	function onSensorStart(){
 			if (intervalFunc !== null){
-				clearInterval(intervalFunc);	
+				clearInterval(intervalFunc);
 			}
 			httpGetAsync (registerUrl, function(responseText){
 				myId = responseText;
@@ -139,19 +139,19 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', end
 				}
 			});
 		}
-		
+
 		function httpGetAsync(theUrl, callback)
 		{
 			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.onreadystatechange = function() { 
+			xmlHttp.onreadystatechange = function() {
 				if (xmlHttp.readyState === 4 && xmlHttp.status === 200){
 					callback(xmlHttp.responseText);
 				}
 			};
-			xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+			xmlHttp.open("GET", theUrl, true); // true for asynchronous
 			xmlHttp.send(null);
 		}
-		
+
 		function sendValue()
 		{
 			step += 1;
@@ -159,16 +159,16 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', end
 			if (sensorType !== null && mean[sensorType] !== null &&  deviation[sensorType] !== null){
 				value = mean[sensorType] + Math.random() * deviation[sensorType];
 			}
-			
+
 			if (sensorType === "Binary"){
 				value = Math.round(value);
 			}
-			
+
 			if (step > 10000 * Math.random()){
 				value = 0;
-				step = 0;	
+				step = 0;
 			}
-			
+
 			httpGetAsync(valueUrl + '?id='+ myId +'&data=' + value, function(responseText){
 				document.getElementById("log").innerHTML = "Sending value: " + value;
 			});
