@@ -44,15 +44,21 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   var names = Map[Int, String]()
   var flows = Map[Int, Flow[String, String, _]]()
 
-  def register = Action {
-    var id = random.nextInt
-    while (ids contains id){
-      id = random.nextInt
-    }
-    ids += id
-    Ok(id + "").withHeaders(
-      ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+  var nextId : Int = 1
 
+  def register = Action {
+    this.synchronized {
+      var id = nextId
+      nextId += 1
+
+//    while (ids contains id){
+//      id = random.nextInt
+//    }
+      ids += id
+
+      Ok(id + "").withHeaders(
+        ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
   }
 
   def measureData(id : Int, data : Float) = Action {
@@ -88,12 +94,14 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
   }
 
   def setName(id : Int, name : String) = Action {
+    this.synchronized {
       if (ids contains id){
           names += (id -> name)
           Ok("")
       } else {
           BadRequest("")
       }
+    }
   }
 
   def socket(id : Int) = WebSocket.accept[String, String] { request =>
@@ -158,7 +166,7 @@ class HomeController @Inject() (implicit system: ActorSystem, materializer: Mate
     for(id <- ids){
         names.get(id) match {
             case Some(name) => ()
-            case None => 
+            case None =>
               SensorParamsFormFill = SensorParamsForm.fill(SensorParams(id,"",0))
               result = Ok(views.html.params(id, SensorParamsFormFill))
         }
