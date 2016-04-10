@@ -13,6 +13,7 @@
 
 		// We use an inline data source in the example, usually data would
 		// be fetched from a server
+		var backup = [];
 
 		var data = [],
 			totalPoints = 300;
@@ -47,6 +48,20 @@
 
 			return res;
 		}
+
+		// Get the data from the server
+
+		function getSensorData() {
+
+			if (data.length > 0){
+				backup.push(data[0]);
+				data = data.slice(1);
+			}
+
+			while (data.length < totalPoints) {
+				//TODO: code to the server connection: node object with attributes Value v and Timestamp t
+				data.push(node);
+			}
 
 		// Set up the control widget
 
