@@ -29,3 +29,7 @@ GET     /socket/:id                 controllers.HomeController.socket(id : Int)
 GET     /chart/:id                  controllers.HomeController.chart(id : Int)
 
 GET     /sensor                     controllers.HomeController.sensor
+
+POST    /params                     controllers.HomeController.modifyParams
+
+GET     /params                     controllers.HomeController.params
