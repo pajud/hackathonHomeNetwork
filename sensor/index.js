@@ -64,8 +64,9 @@ var Sensor = function(name, on_registered) {
 		$this.sensor_id = content;
 		console.log($this.name, ' register: ', content);
 
-		request(url_setName($this.sensor_id, name), function(err, response, content) {
-			console.log($this.name, ' setName: ', content);
+		var url = url_setName($this.sensor_id, name);
+		request(url, function(err, response, content) {
+			console.log($this.name, url, content);
 
 			on_registered();
 		});
@@ -76,7 +77,7 @@ Sensor.prototype.report = function(value) {
 	var $this = this;
 	request(url_report($this.sensor_id, value), function(err, response, content) {
 		//console.log('err', err, 'cnt', content);
-		console.log($this.name, ' <- ', value, err, content);
+		console.log($this.name, '(', $this.sensor_id, ')', ' <- ', value, err, content);
 	});
 };
 
@@ -146,7 +147,7 @@ Device.prototype.try_send = function() {
 	if(values.length == 20) {
 		this.received_buffer = '';
 
-		//console.log(values);
+		console.log(values);
 
 		var measurement = {
 			'heading': values[9],
